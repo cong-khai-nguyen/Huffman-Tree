@@ -175,6 +175,9 @@ int main(int argc, char *argv[])
     serv_addr.sin_addr.s_addr = INADDR_ANY;
     serv_addr.sin_port = htons(portno);
 
+    auto option = 1;
+    n = setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
+
     if (bind(sockfd, (struct sockaddr *)&serv_addr,
              sizeof(serv_addr)) < 0)
     {

@@ -21,6 +21,7 @@ struct arguments
     string *arr;
     int portno;
     string hostName;
+    pthread_mutex_t *sem;
 };
 
 void *connect(void *arg)
@@ -37,6 +38,7 @@ void *connect(void *arg)
     {
         std::cerr << "ERROR opening socket";
     }
+    pthread_mutex_lock(argu->sem);
     server = gethostbyname(argu->hostName.c_str());
     if (server == NULL)
     {
@@ -50,21 +52,18 @@ void *connect(void *arg)
           (char *)&serv_addr.sin_addr.s_addr,
           server->h_length);
     serv_addr.sin_port = htons(portno);
+    pthread_mutex_unlock(argu->sem);
     if (connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
     {
         std::cerr << "ERROR connecting";
         exit(1);
     }
-
     string line = argu->line, binaryCode = "";
     istringstream ss(line);
 
     ss >> binaryCode;
     // Convert binary string to char
-    char strArray[binaryCode.size() + 1];
-    strcpy(strArray, binaryCode.c_str());
-    int sMessage = strlen(strArray);
-    n = write(sockfd, strArray, sMessage);
+    n = write(sockfd, binaryCode.data(), binaryCode.size());
     if (n < 0)
     {
         std::cerr << "ERROR writing to socket client side";
@@ -81,7 +80,7 @@ void *connect(void *arg)
 
     size_t pos;
     while (ss >> pos)
-        argu->arr[pos] = letter;
+        (*argu->arr)[pos] = letter;
 
     close(sockfd);
     return NULL;
@@ -113,17 +112,19 @@ int main(int argc, char *argv[])
     const int THREAD_SIZE = list.size();
     pthread_t tid[THREAD_SIZE];
     static arguments *args = new arguments[THREAD_SIZE];
-    string arr[wordLen];
+    string arr = string(wordLen, '\0');
     pthread_mutex_t sem;
     pthread_mutex_init(&sem, nullptr);
 
     for (int i = 0; i < THREAD_SIZE; i++)
     {
         args[i].line = list[i];
-        args[i].arr = arr;
+        args[i].arr = &arr;
         args[i].portno = stoi(argv[2]);
         args[i].hostName = argv[1];
-        if (pthread_create(&tid[i], NULL, connect, (void *)&args[i]))
+        args[i].sem = &sem;
+
+        if (pthread_create(&tid[i], NULL, connect, &args[i]))
         {
             fprintf(stderr, "Error creating thread\n");
             return 1;
@@ -133,6 +134,7 @@ int main(int argc, char *argv[])
     for (int i = 0; i < THREAD_SIZE; i++)
         pthread_join(tid[i], NULL);
 
+    pthread_mutex_destroy(&sem);
     string decoded = "";
 
     for (int i = 0; i < wordLen; i++)

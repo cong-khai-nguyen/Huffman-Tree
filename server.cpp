@@ -66,9 +66,9 @@ void dfs(Node *parent, string dir)
 }
 
 // Generate Priority Queue with Huffman Tree Algorithm
-void pqGen(heapq<Node *, vector<Node *>, compareNode> &pq)
+int pqGen(heapq<Node *, vector<Node *>, compareNode> &pq)
 {
-    int string_len = 0, numLine = 0;
+    int string_len = 0, alphaChar = 0;
     vector<Node *> vec;
     string line;
 
@@ -79,7 +79,7 @@ void pqGen(heapq<Node *, vector<Node *>, compareNode> &pq)
         string_len += freq;
         // cout << line.substr(0, 1) << " " << freq << endl;
         vec.push_back(new Node(line.substr(0, 1), freq, line.substr(0, 1), 0));
-        numLine++;
+        alphaChar++;
     }
 
     // Sort the vector based on values then lexicographically
@@ -119,6 +119,7 @@ void pqGen(heapq<Node *, vector<Node *>, compareNode> &pq)
 
     // for (auto temp : pq)
     //     cout << temp->str << " " << temp->value << endl;
+    return alphaChar;
 }
 
 // Decode function
@@ -145,7 +146,7 @@ int main(int argc, char *argv[])
 {
     // Initialize pq
     heapq<Node *, vector<Node *>, compareNode> pq;
-    pqGen(pq);
+    int alphaChar = pqGen(pq);
 
     dfs(pq.top(), "");
 
@@ -183,7 +184,7 @@ int main(int argc, char *argv[])
     listen(sockfd, 5);
     clilen = sizeof(cli_addr);
 
-    for (int i = 0; i < pq.size(); i++)
+    for (int i = 0; i < alphaChar; i++)
     {
         newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, (socklen_t *)&clilen);
         if (fork() == 0)
@@ -206,12 +207,12 @@ int main(int argc, char *argv[])
             }
             // cout << buffer << endl;
             string binaryCode = string(buffer);
-            cout << binaryCode << endl;
+            // cout << binaryCode << endl;
 
             // Decode the binary code
             char letter = decode(binaryCode, pq.top())[0];
 
-            cout << letter << endl;
+            // cout << letter << endl;
             // Write back to the client
             n = write(newsockfd, &letter, sizeof(char));
             if (n < 0)

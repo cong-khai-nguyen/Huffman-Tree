@@ -79,6 +79,10 @@ void *connect(void *arg)
         exit(1);
     }
 
+    size_t pos;
+    while (ss >> pos)
+        argu->arr[pos] = letter;
+
     close(sockfd);
     return NULL;
 }
@@ -110,6 +114,8 @@ int main(int argc, char *argv[])
     pthread_t tid[THREAD_SIZE];
     static arguments *args = new arguments[THREAD_SIZE];
     string arr[wordLen];
+    pthread_mutex_t sem;
+    pthread_mutex_init(&sem, nullptr);
 
     for (int i = 0; i < THREAD_SIZE; i++)
     {

@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
     {
         list.push_back(line);
         istringstream ss(line); // string stream
-
+        ss >> line;
         while (ss >> line)
             wordLen++;
     }
